@@ -112,47 +112,45 @@ generator = nn.Sequential(
     nn.Tanh()
 )
 
-xb=torch.randn(batch_size,latent_size,1,1,)
-fake_images=generator(xb)
-show_images(fake_images)
 
 generator=to_device(generator,device)
 
-def train_discriminator(real_images,opt_d):
+def train_discriminator(real_images, opt_d):
     opt_d.zero_grad()
 
-    real_preds=discriminator(real_images)
-    real_targets=torch.ones(real_images.size(0),1,device=device)
-    real_loss=F.binary_cross_entropy(real_preds,real_targets)
-    real_score=torch.mean(real_loss).item()
-    
-    latent=torch.zeros(batch_size,latent_size,1,1,device=device)
-    fake_images=generator(latent)
+    real_preds = discriminator(real_images)
+    real_targets = torch.ones(real_images.size(0), 1, device=device)
+    real_loss = F.binary_cross_entropy(real_preds, real_targets)
+    real_score = torch.mean(real_preds).item()
 
-    fake_targets=torch.zeros(fake_images.size(0),1,device=device)
-    fake_preds=discriminator(fake_images)
-    fake_loss=F.binary_cross_entropy(fake_preds,fake_targets)
-    fake_score=torch.mean(fake_preds).item()
-    
-    loss=real_loss+fake_loss
+    latent = torch.randn(batch_size, latent_size, 1, 1, device=device)
+    fake_images = generator(latent)
+
+    fake_targets = torch.zeros(fake_images.size(0), 1, device=device)
+    fake_preds = discriminator(fake_images)
+    fake_loss = F.binary_cross_entropy(fake_preds, fake_targets)
+    fake_score = torch.mean(fake_preds).item()
+
+ 
+    loss = real_loss + fake_loss
     loss.backward()
     opt_d.step()
-    return loss.item(),real_score,fake_score
+    return loss.item(), real_score, fake_score
 
 def train_generator(opt_g):
     opt_g.zero_grad()
-
-    latent=torch.randn(batch_size,latent_size,1,1,device=device)
-    fake_images=generator(latent)
-
-    preds=discriminator(fake_images)
-    targets=torch.ones(batch_size,1,device=device)
-    loss=F.binary_cross_entropy(preds,targets)
-
+    
+    latent = torch.randn(batch_size, latent_size, 1, 1, device=device)
+    fake_images = generator(latent)
+    
+    preds = discriminator(fake_images)
+    targets = torch.ones(batch_size, 1, device=device)
+    loss = F.binary_cross_entropy(preds, targets)
+    
     loss.backward()
     opt_g.step()
-
-    return loss.item()
+    
+    return loss.item()    
 
 dir='generated'
 os.makedirs(dir,exist_ok=True)
